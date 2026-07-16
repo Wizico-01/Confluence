@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Local env files (Crucial to keep your Paystack and Supabase keys secure!)
+.env
+.env.local
+.env.*.local
+
+# Supabase temporary files
+supabase/.temp/
+.supabase/
+
+# Production build outputs
+dist/
+build/
