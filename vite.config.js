@@ -1,11 +1,11 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/Confluence/",
+  base: '/Confluence/', // Must match your GitHub repository name exactly
   build: {
-    outDir: "docs", // Compiles files into /docs instead of /dist
-  },
-});
+    outDir: 'docs', // Tells Vite to output the build to the /docs folder
+    emptyOutDir: true, // Clears the folder before rebuilding
+  }
+})
