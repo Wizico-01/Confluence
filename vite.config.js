@@ -5,4 +5,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "/Confluence/",
+  build: {
+    outDir: "docs", // Compiles files into /docs instead of /dist
+  },
 });
