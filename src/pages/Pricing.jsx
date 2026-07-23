@@ -12,8 +12,8 @@ const PLANS = [
     id: "starter",
     name: "Starter",
     description: "One trading style, core alerts.",
-    priceNaira: 15000,
-    planCode: "PLN_38kyw6q62fn7uu5",
+    priceNaira: 100,
+    planCode: "PLN_be7i1bbnux52pap",
     features: ["1 trading style (swing, day, or scalp)", "Up to 3 symbols", "Confluence alerts", "Risk & lot size calculator"],
   },
   {
