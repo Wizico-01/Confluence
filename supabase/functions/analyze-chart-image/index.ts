@@ -12,6 +12,7 @@
 // Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-xxx
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
 
     const imageRes = await fetch(imageUrl);
     const imageBuffer = await imageRes.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+    const base64Image = encodeBase64(imageBuffer);
     const mediaType = imageRes.headers.get("content-type") || "image/jpeg";
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
