@@ -13,8 +13,8 @@ const PLANS = [
     name: "Starter",
     description: "One trading style, core alerts.",
     priceNaira: 100,
-    planCode: "PLN_be7i1bbnux52pap",
-    features: ["1 trading style (swing, day, or scalp)", "Up to 3 symbols", "Confluence alerts", "Risk & lot size calculator"],
+    planCode: "PLN_mhdx4k2ol5kdudb",
+    features: ["1 trading style (swing, day, or scalp)", "Up to 3 symbols", "GOBULU alerts", "Risk & lot size calculator"],
   },
   {
     id: "pro",
@@ -22,7 +22,7 @@ const PLANS = [
     description: "Full cascade access, all styles.",
     priceNaira: 35000,
     planCode: "PLN_hofp2dt3rbkn9bs",
-    features: ["All 3 trading styles", "Unlimited symbols", "Confluence alerts + alert log", "Priority data refresh"],
+    features: ["All 3 trading styles", "Unlimited symbols", "GOBULU alerts + alert log", "Priority data refresh"],
     highlight: true,
   },
 ];

@@ -6,7 +6,7 @@
 // visible key levels. This is a cross-check/second-opinion layer that sits
 // alongside the live-data cascade — image reads are inherently fuzzier
 // than structure computed from real OHLC data, so treat the result as
-// supporting context, not a replacement for the cascade's confluence score.
+// supporting context, not a replacement for the cascade's GOBULU score.
 //
 // Deploy:  supabase functions deploy analyze-chart-image
 // Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-xxx
@@ -16,6 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -40,15 +41,16 @@ Be conservative — if something isn't clearly visible, say so rather than guess
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response("Unauthorized", { status: 401 });
+    if (!authHeader) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
 
     const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData, error } = await supabaseAuth.auth.getUser();
-    if (error || !userData?.user) return new Response("Unauthorized", { status: 401 });
+    if (error || !userData?.user) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
 
     const { data: profile } = await supabaseAuth
       .from("profiles")
@@ -56,11 +58,14 @@ Deno.serve(async (req) => {
       .eq("id", userData.user.id)
       .single();
     if (profile?.subscription_status !== "active") {
-      return new Response(JSON.stringify({ error: "Subscription required" }), { status: 402 });
+      return new Response(JSON.stringify({ error: "Subscription required" }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { imageUrl, symbol, timeframe } = await req.json();
-    if (!imageUrl) return new Response("Missing imageUrl", { status: 400 });
+    if (!imageUrl) return new Response("Missing imageUrl", { status: 400, headers: corsHeaders });
 
     const imageRes = await fetch(imageUrl);
     const imageBuffer = await imageRes.arrayBuffer();
@@ -92,18 +97,31 @@ Deno.serve(async (req) => {
 
     const aiJson = await aiRes.json();
     const textBlock = aiJson.content?.find((c: any) => c.type === "text");
-    if (!textBlock) return new Response(JSON.stringify({ error: "No response from model" }), { status: 502 });
+    if (!textBlock) {
+      return new Response(JSON.stringify({ error: "No response from model" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let parsed;
     try {
       parsed = JSON.parse(textBlock.text.replace(/```json|```/g, "").trim());
     } catch {
-      return new Response(JSON.stringify({ error: "Could not parse model response" }), { status: 502 });
+      return new Response(JSON.stringify({ error: "Could not parse model response" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(JSON.stringify(parsed), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(parsed), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: "Internal error" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
