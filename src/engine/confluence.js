@@ -1,6 +1,8 @@
 // Confluence scoring: turns the cascade + pattern + level data into the
 // 8-point checklist and an overall strength label.
-export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib }) {
+import { fmtPrice } from "./symbols.js";
+
+export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel }) {
   const biasTrend = tiers[0].trend;
   const directionTrend = tiers[1].trend;
   const trendTierTrend = tiers[2].trend;
@@ -10,10 +12,12 @@ export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, 
   const structureClean = entryTier.trend !== "range";
   const bosOk = !entryTier.bos.occurred || entryTier.bos.retestConfirmed;
   const patternValid = !!pattern && pattern.direction !== "neutral";
+  // Trend-following: a bullish reversal candle during a pullback in an
+  // uptrend confirms a BUY continuation — not a reversal against the trend.
   const patternAgreesWithBias =
     patternValid &&
-    ((biasTrend === "downtrend" && pattern.direction === "bullish") ||
-      (biasTrend === "uptrend" && pattern.direction === "bearish") ||
+    ((biasTrend === "uptrend" && pattern.direction === "bullish") ||
+      (biasTrend === "downtrend" && pattern.direction === "bearish") ||
       biasTrend === "range");
 
   const checklist = [
@@ -21,14 +25,26 @@ export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, 
     { key: "trend", label: `${tiers[2].name} trend confirms higher-timeframe bias`, pass: trendConfirms },
     { key: "structure", label: "Market structure is clean (not choppy/range)", pass: structureClean },
     { key: "bos", label: entryTier.bos.occurred ? "Break of structure retested before acting" : "No conflicting break of structure", pass: bosOk },
-    { key: "level", label: "Price sitting at a key support/resistance level", pass: priceNearKeyLevel },
-    { key: "merged", label: "That level is a psych level + structure overlap", pass: priceNearMergedLevel },
+    {
+      key: "level",
+      label: priceNearKeyLevel && nearestLevel
+        ? `Price sitting at ${fmtPrice(symbol, nearestLevel.price)} support/resistance level`
+        : "Price not currently at a key support/resistance level",
+      pass: priceNearKeyLevel,
+    },
+    {
+      key: "merged",
+      label: priceNearMergedLevel && mergedLevel
+        ? `${fmtPrice(symbol, mergedLevel.price)} is a psychological level + structure overlap`
+        : "Current level is not a psych + structure overlap",
+      pass: priceNearMergedLevel,
+    },
     { key: "pattern", label: pattern ? `Reversal candlestick confirmed (${pattern.name})` : "Reversal candlestick confirmed", pass: patternValid && patternAgreesWithBias },
     {
       key: "fib",
-      label: fib?.valid
-        ? `Price at ${fib.atKeyLevel ? fib.atKeyLevel.label : "50.0/61.8"}% Fibonacci retracement`
-        : "Price at 50.0% or 61.8% Fibonacci retracement",
+      label: fib?.priceAtKeyRetracement
+        ? `Price at ${fib.atKeyLevel.label}% Fibonacci level (${fmtPrice(symbol, fib.atKeyLevel.price)})`
+        : "Price not at the 50.0% or 61.8% Fibonacci level",
       pass: !!fib?.priceAtKeyRetracement,
     },
   ];
@@ -38,7 +54,9 @@ export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, 
   // banding above that is widened slightly to account for the extra point.
   const score = checklist.filter((c) => c.pass).length;
   const strength = score < 4 ? "Weak" : score === 4 ? "Good" : score <= 6 ? "Strong" : "Very Strong";
-  const alarmActive = score >= 4 && patternValid && patternAgreesWithBias;
+  // Only "Strong" (5+) or better ever qualifies as an actual signal — Good (4)
+  // is informational only, never alerts the trader to act.
+  const alarmActive = score >= 5 && patternValid && patternAgreesWithBias;
 
   return { checklist, score, strength, alarmActive, total: checklist.length };
 }

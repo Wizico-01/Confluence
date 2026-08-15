@@ -1,24 +1,14 @@
-export const FOREX_SYMBOLS = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "GBPJPY", "AUDUSD"];
-
-// Deriv's synthetic indices — algorithmically generated, not real forex,
-// so they're never available from Twelve Data or any standard market data
-// provider. Live data for these comes from Deriv's own public API instead
-// (see supabase/functions/deriv-data).
-export const SYNTHETIC_SYMBOLS = [
-  "VOL75", "VOL100", "VOL50", "VOL25", "BOOM500", "BOOM1000", "CRASH500", "CRASH1000",
+export const FOREX_SYMBOLS = [
+  "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD",
+  "EURGBP", "EURJPY", "EURCHF", "EURAUD", "EURCAD", "EURNZD",
+  "GBPJPY", "GBPCHF", "GBPAUD", "GBPCAD", "GBPNZD",
+  "AUDJPY", "AUDCHF", "AUDCAD", "AUDNZD",
+  "NZDJPY", "NZDCHF", "NZDCAD",
+  "CADJPY", "CADCHF", "CHFJPY",
+  "XAUUSD", "XAGUSD",
 ];
 
-// Deriv's underlying symbol codes, used when calling their API.
-export const DERIV_SYMBOL_CODES = {
-  VOL75: "R_75", VOL100: "R_100", VOL50: "R_50", VOL25: "R_25",
-  BOOM500: "BOOM500", BOOM1000: "BOOM1000", CRASH500: "CRASH500", CRASH1000: "CRASH1000",
-};
-
-export const SYMBOLS = [...FOREX_SYMBOLS, ...SYNTHETIC_SYMBOLS];
-
-export function isSynthetic(symbol) {
-  return SYNTHETIC_SYMBOLS.includes(symbol);
-}
+export const SYMBOLS = FOREX_SYMBOLS;
 
 export const CASCADES = {
   swing: { label: "Swing Trader", tiers: ["Monthly", "Weekly", "Daily", "4H"], roles: ["Bias", "Direction", "Trend", "Entry"] },
@@ -26,33 +16,37 @@ export const CASCADES = {
   scalp: { label: "Scalper", tiers: ["1H", "30M", "15M", "1M/5M"], roles: ["Bias", "Direction", "Trend", "Entry"] },
 };
 
-// Deriv candle granularity is in seconds and tops out at 1 day (86400) —
-// there's no native weekly/monthly candle. For those two tiers we fetch
-// daily candles and aggregate them client-side (see structure.js
-// aggregateCandles) rather than requesting a granularity Deriv doesn't have.
-export const TIER_GRANULARITY_SECONDS = {
-  Monthly: { base: "Daily", aggregate: 30 },
-  Weekly: { base: "Daily", aggregate: 7 },
-  Daily: { seconds: 86400 },
-  "4H": { seconds: 14400 },
-  "1H": { seconds: 3600 },
-  "30M": { seconds: 1800 },
-  "15M": { seconds: 900 },
-  "1M/5M": { seconds: 300 },
-};
+export function isSynthetic(symbol) {
+  return symbol?.startsWith("Vol") || symbol?.startsWith("Boom") || symbol?.startsWith("Crash") || false;
+}
 
 export function basePriceFor(symbol) {
-  const synthetic = { VOL75: 250000, VOL100: 950000, VOL50: 180000, VOL25: 120000, BOOM500: 6800, BOOM1000: 9300, CRASH500: 6200, CRASH1000: 8700 };
-  const forex = { EURUSD: 1.085, GBPUSD: 1.265, USDJPY: 156.2, XAUUSD: 2410, GBPJPY: 197.4, AUDUSD: 0.652 };
-  return synthetic[symbol] ?? forex[symbol] ?? 1.1;
+  const known = { EURUSD: 1.085, GBPUSD: 1.265, USDJPY: 156.2, XAUUSD: 2410, XAGUSD: 29, GBPJPY: 197.4, AUDUSD: 0.652 };
+  return known[symbol] ?? 1.1;
 }
+
 export function decimalsFor(symbol) {
-  if (isSynthetic(symbol)) return 2;
-  return symbol.includes("JPY") ? 3 : symbol === "XAUUSD" ? 2 : 5;
+  return symbol.includes("JPY") ? 3 : symbol === "XAUUSD" || symbol === "XAGUSD" ? 2 : 5;
 }
+
 export function fmtPrice(symbol, val) {
+  if (val == null || isNaN(val)) return "-";
   return val.toFixed(decimalsFor(symbol));
 }
+
+// Psych levels ahead of price in a given trade direction — used for
+// take-profit targets, since TP should always land on a round number.
+export function psychLevelsInDirection(symbol, price, direction, count = 5) {
+  const grid = symbol === "XAUUSD" ? 10 : symbol === "XAGUSD" ? 0.5 : symbol.includes("JPY") ? 0.5 : 0.005;
+  const base = direction === "buy" ? Math.ceil(price / grid) * grid : Math.floor(price / grid) * grid;
+  const levels = [];
+  for (let i = 0; i <= count; i++) {
+    const lvl = direction === "buy" ? base + i * grid : base - i * grid;
+    levels.push(+lvl.toFixed(decimalsFor(symbol)));
+  }
+  return direction === "buy" ? levels.filter((l) => l > price) : levels.filter((l) => l < price);
+}
+
 export function psychLevelsNear(symbol, price) {
   const grid = isSynthetic(symbol) ? price * 0.002 : symbol === "XAUUSD" ? 10 : symbol.includes("JPY") ? 0.5 : 0.005;
   const levels = [];
