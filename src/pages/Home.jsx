@@ -10,9 +10,9 @@ const CASCADE_PREVIEW = [
 ];
 
 const FEATURES = [
-  { icon: GitBranch, title: "Top-down cascade", body: "Bias, direction, trend, and entry — each timeframe checked in order, the way disciplined traders actually work." },
+  { icon: GitBranch, title: "Top-down cascade", body: "Bias, direction, trend, and entry, each timeframe checked in order, the way disciplined traders actually work." },
   { icon: LayoutGrid, title: "Structure-aware", body: "HH/HL, LH/LL, and break-of-structure with mandatory retest, so a single wick can't fake you into a trade." },
-  { icon: Bell, title: "Confluence alerts", body: "Only alarms once trend, structure, key levels, and a reversal candlestick line up — 4 minimum, scored out of 7." },
+  { icon: Bell, title: "Confluence alerts", body: "Only alarms once trend, structure, key levels, and a reversal candlestick line up, 4 minimum, scored out of 7." },
   { icon: Shield, title: "Risk built in", body: "Set your account size and risk appetite once; every setup comes with a ready-to-use lot size." },
 ];
 
@@ -30,8 +30,8 @@ export default function Home() {
               Trade the setup, not the noise.
             </h1>
             <p className="text-white/70 mt-5 text-base md:text-lg max-w-md">
-              Confluence runs your top-down analysis across every timeframe automatically —
-              trend, structure, key levels, and candlestick confirmation — and only alerts you
+              Confluence runs your top-down analysis across every timeframe automatically,
+              trend, structure, key levels, and candlestick confirmation, and alerts you
               when enough of them agree.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -44,24 +44,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Signature element: the cascade collapsing into a confirmed entry */}
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-            <p className="text-white/50 text-xs font-semibold uppercase tracking-wide mb-4">EURUSD · Day trader cascade</p>
-            <div className="space-y-2.5">
-              {CASCADE_PREVIEW.map((tier, i) => (
-                <div key={tier.label} className={`flex items-center justify-between rounded-xl bg-white/[0.06] px-4 py-3 animate-cascade-${i + 1}`}>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">{tier.role}</p>
-                    <p className="text-sm font-bold text-white">{tier.label}</p>
-                  </div>
-                  <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-full ${tier.color}`}>{tier.trend}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-xl bg-royal px-4 py-3 flex items-center justify-between animate-cascade-4">
-              <span className="text-white text-sm font-bold">Confluence: 5/7 · Strong</span>
-              <Bell size={16} className="text-white" />
-            </div>
+                    {/* Hero image — place your real product/ad photo at public/hero.jpg */}
+          <div className="rounded-2xl overflow-hidden border border-white/10">
+            <img src="/hero.jpg" alt="Confluence app preview" className="w-full h-auto object-cover" />
           </div>
         </div>
       </section>

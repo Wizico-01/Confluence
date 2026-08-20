@@ -184,3 +184,37 @@ export function evaluateBOSFromCandles(labeled, trend, candles, tolerance) {
   const direction = trend === "uptrend" ? "bearish" : "bullish";
   return { occurred: true, direction, level: lastOpposing.price, retestConfirmed };
 }
+
+/*
+ * Detects supply/demand zones: a candle (or short run) with an unusually
+ * large body compared to recent average marks a strong directional move.
+ * The zone is the last small-bodied candle right before that move — price
+ * returning there later is treated as a live, "unmitigated" zone.
+ */
+export function detectSupplyDemandZones(candles, lookback = 40) {
+  const recent = candles.slice(-lookback);
+  if (recent.length < 6) return [];
+  const avgBody = recent.reduce((s, c) => s + Math.abs(c.close - c.open), 0) / recent.length;
+  const zones = [];
+
+  for (let i = 2; i < recent.length; i++) {
+    const c = recent[i];
+    const body = Math.abs(c.close - c.open);
+    if (body < avgBody * 1.8) continue; // not a strong enough move
+
+    const base = recent[i - 1]; // the small candle right before the move
+    const bullish = c.close > c.open;
+    zones.push({
+      type: bullish ? "demand" : "supply",
+      low: Math.min(base.low, base.open, base.close),
+      high: Math.max(base.high, base.open, base.close),
+      index: i,
+    });
+  }
+
+  // Keep only the most recent zone of each type — older ones are more
+  // likely to have already been "mitigated" (retraded through).
+  const latestDemand = [...zones].reverse().find((z) => z.type === "demand");
+  const latestSupply = [...zones].reverse().find((z) => z.type === "supply");
+  return [latestDemand, latestSupply].filter(Boolean);
+}

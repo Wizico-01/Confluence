@@ -1,21 +1,24 @@
 // Orchestrates a full cascade analysis for a symbol + trading style.
 
-import { mulberry32, hashStr } from "./rng.js";
-import { CASCADES, basePriceFor, psychLevelsNear, psychLevelsInDirection, decimalsFor, fmtPrice } from "./symbols.js";
-import { generateStructure, labelStructure, deriveTrend, evaluateBOS, detectSwingPoints, labelSwingPointsFromCandles, evaluateBOSFromCandles } from "./structure.js";
-import { PATTERNS, makeCandle, injectPattern, detectPattern } from "./patterns.js";
+import { CASCADES, basePriceFor, psychLevelsNear, psychLevelsInDirection, countLevelRetests, decimalsFor, fmtPrice, TIER_MINUTES } from "./symbols.js";
+import { detectSwingPoints, labelSwingPointsFromCandles, deriveTrend, evaluateBOSFromCandles, detectSupplyDemandZones } from "./structure.js";
+import { detectPattern } from "./patterns.js";
 import { buildConfluence } from "./confluence.js";
 import { buildFibonacci } from "./fibonacci.js";
 
+const MIN_RETESTS = 2; // a level must be touched at least twice to count as proven/strong
+
 /*
  * Turns a confirmed setup into an actual trade plan: entry price, stop
- * loss, take profit (always a psychological level), and whether price is
- * currently sitting in the good entry zone or has already run past it.
+ * loss, take profit, and whether price is currently at, approaching, or
+ * has moved past the entry zone.
+ *
+ * Entry can come from any of three equally-weighted strong sources —
+ * structure (retested swing levels), unmitigated supply/demand zones, or
+ * strong (retested) psychological levels — whichever is genuinely closest
+ * to current price. None is a fallback for another.
  */
-function buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, base, score) {
-  // Direction always follows the entry timeframe's trend — this is a
-  // trend-continuation system, not a reversal system. A reversal candle
-  // during a pullback confirms getting back IN the trend's direction.
+function buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, base, score, zones, tierName) {
   let direction;
   if (entryTier.trend === "uptrend") direction = "buy";
   else if (entryTier.trend === "downtrend") direction = "sell";
@@ -25,21 +28,59 @@ function buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, b
     ((direction === "buy" && pattern.direction === "bullish") || (direction === "sell" && pattern.direction === "bearish"));
 
   const tolerance = base * 0.0012;
+  const zoneTolerance = tolerance * 0.5;
+  const candles = entryTier.candles ?? [];
 
-  // Entry MUST be an actual psychological level — every keyLevels entry
-  // already is one (see psychLevelsNear), so this never uses Fibonacci or
-  // any non-round-number price as the entry.
-  const merged = keyLevels.find((k) => k.merged);
-  const nearest = keyLevels.reduce((c, k) =>
-    !c || Math.abs(k.price - livePrice) < Math.abs(c.price - livePrice) ? k : c, null);
-  const entryPrice = merged ? merged.price : (nearest ? nearest.price : livePrice);
+  const strongSwingLevels = candles.length
+    ? entryTier.labeled
+        .map((p) => ({ price: p.price, retests: countLevelRetests(candles, p.price, tolerance) }))
+        .filter((l) => l.retests >= MIN_RETESTS)
+    : [];
 
-  // Bonus confluence: does the Fibonacci 50%/61.8% level land on this same
-  // psych-level entry? If so, that's extra confirmation worth surfacing.
+  const zoneCandidates = (zones ?? []).map((z) => ({
+    price: direction === "buy" ? z.high : z.low, // enter from the near edge of the zone
+    zoneType: z.type,
+    zoneLow: z.low,
+    zoneHigh: z.high,
+  }));
+
+  const swingCandidatesRanked = strongSwingLevels
+    .map((l) => ({ ...l, dist: Math.abs(l.price - livePrice) }))
+    .sort((a, b) => a.dist - b.dist);
+  const zoneCandidatesRanked = zoneCandidates
+    .map((z) => ({ ...z, dist: Math.abs(z.price - livePrice) }))
+    .sort((a, b) => a.dist - b.dist);
+  // keyLevels is already filtered upstream to only strong, retested psych
+  // levels — on equal footing with structure and supply/demand.
+  const psychCandidatesRanked = keyLevels
+    .map((k) => ({ price: k.price, dist: Math.abs(k.price - livePrice) }))
+    .sort((a, b) => a.dist - b.dist);
+
+  const bestSwing = swingCandidatesRanked[0];
+  const bestZone = zoneCandidatesRanked[0];
+  const bestPsych = psychCandidatesRanked[0];
+
+  const contenders = [
+    bestSwing && { ...bestSwing, source: "structure" },
+    bestZone && { ...bestZone, source: "supply_demand" },
+    bestPsych && { ...bestPsych, source: "psychological" },
+  ].filter(Boolean);
+
+  if (!contenders.length) return null; // nothing strong nearby — no valid trade
+
+  contenders.sort((a, b) => a.dist - b.dist);
+  const chosen = contenders[0];
+  const entryPrice = chosen.price;
+  const entrySource = chosen.source;
+  const entryZone = entrySource === "supply_demand" ? chosen : undefined;
+
+  // Bonus: does a strong psych level coincide with the chosen entry, even
+  // when the entry itself came from structure or a supply/demand zone?
+  const entryIsPsychBonus = entrySource !== "psychological" && !!bestPsych && Math.abs(bestPsych.price - entryPrice) < tolerance;
+
   const fibTolerance = base * 0.0015;
   const fibAligns = fib?.priceAtKeyRetracement && Math.abs(fib.atKeyLevel.price - entryPrice) < fibTolerance;
 
-  // Stop loss: just beyond the swing point that would invalidate the setup.
   const swingBuffer = base * 0.0015;
   let stopLoss;
   if (direction === "buy") {
@@ -50,112 +91,63 @@ function buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, b
     stopLoss = (swingHigh ? swingHigh.price : entryPrice + base * 0.004) + swingBuffer;
   }
 
-  // Take profit: nearest psychological level beyond entry, in the trade's
-  // direction, giving at least a 1.5:1 reward-to-risk ratio.
   const risk = Math.abs(entryPrice - stopLoss);
-  const candidates = psychLevelsInDirection(symbol, entryPrice, direction, 6);
-  const takeProfit = candidates.find((lvl) => Math.abs(lvl - entryPrice) >= risk * 1.5) ?? candidates[candidates.length - 1] ?? null;
+  const tpCandidates = psychLevelsInDirection(symbol, entryPrice, direction, 6);
+  const takeProfit = tpCandidates.find((lvl) => Math.abs(lvl - entryPrice) >= risk * 1.5) ?? tpCandidates[tpCandidates.length - 1] ?? null;
 
-  // Zone status uses a tight tolerance — "at the zone" must mean genuinely
-  // at the level, not merely somewhere in its general vicinity.
-  const zoneTolerance = tolerance * 0.5;
+  const entryLabel = entrySource === "supply_demand"
+    ? `${entryZone.zoneType} zone (${fmtPrice(symbol, entryZone.zoneLow)}–${fmtPrice(symbol, entryZone.zoneHigh)})`
+    : entrySource === "psychological"
+      ? `${fmtPrice(symbol, entryPrice)} psychological level`
+      : `${fmtPrice(symbol, entryPrice)} support/resistance level`;
+
   const distancePastEntry = direction === "buy" ? livePrice - entryPrice : entryPrice - livePrice;
-  let zoneStatus, zoneMessage;
+  let zoneStatus, zoneMessage, missedInfo = null;
 
   if (distancePastEntry > zoneTolerance) {
     zoneStatus = "missed";
-    zoneMessage = "Price has already moved past this zone — do not enter. Wait for a fresh pullback.";
+
+    let candlesAgo = null;
+    for (let i = candles.length - 1; i >= 0; i--) {
+      const c = candles[i];
+      if (c.low <= entryPrice + zoneTolerance && c.high >= entryPrice - zoneTolerance) {
+        candlesAgo = candles.length - 1 - i;
+        break;
+      }
+    }
+    const minutesPerCandle = TIER_MINUTES[tierName] ?? 60;
+    const elapsedMinutes = candlesAgo != null ? candlesAgo * minutesPerCandle : null;
+    const elapsedLabel = elapsedMinutes == null ? "a while ago"
+      : elapsedMinutes < 60 ? `~${elapsedMinutes}m ago`
+      : elapsedMinutes < 1440 ? `~${(elapsedMinutes / 60).toFixed(1)}h ago`
+      : `~${(elapsedMinutes / 1440).toFixed(1)}d ago`;
+
+    const stillClose = distancePastEntry <= risk * 0.6;
+    missedInfo = { candlesAgo, elapsedLabel, stillClose };
+    zoneMessage = stillClose
+      ? `Price left the ${entryLabel} ${elapsedLabel} and hasn't moved far — still cautiously watchable, but do not chase without fresh confluence.`
+      : `Price left the ${entryLabel} ${elapsedLabel} and has moved too far — this entry is gone. Wait for a new setup.`;
   } else if (Math.abs(livePrice - entryPrice) <= zoneTolerance) {
-    // Price IS at the psych level — but that alone is never a signal.
-    // A signal requires strong confluence (5+) AND a confirmed reversal
-    // candle in the trend's direction at this exact level.
     if (score >= 5 && confirmed) {
       zoneStatus = "at_zone";
       zoneMessage = fibAligns
-        ? `Price is at the ${fmtPrice(symbol, entryPrice)} psychological level — reinforced by the ${fib.atKeyLevel.label}% Fibonacci level lining up exactly here — with strong confluence, in line with the trend. Valid entry.`
-        : `Price is at the ${fmtPrice(symbol, entryPrice)} psychological level with strong confluence, in line with the trend — valid entry.`;
+        ? `Price is at the ${entryLabel} — reinforced by the ${fib.atKeyLevel.label}% Fibonacci level lining up here — with strong confluence, in line with the trend. Valid entry.`
+        : `Price is at the ${entryLabel} with strong confluence, in line with the trend — valid entry.`;
     } else {
       zoneStatus = "insufficient";
-      zoneMessage = `Price is at ${fmtPrice(symbol, entryPrice)}, a psychological level, but confluence isn't strong enough yet. Not a valid signal.`;
+      zoneMessage = `Price is at the ${entryLabel} — but confluence isn't strong enough yet. Not a valid signal.`;
     }
   } else {
     zoneStatus = "approaching";
-    zoneMessage = `Price hasn't reached the ${fmtPrice(symbol, entryPrice)} zone yet, wait for it to arrive.`;
+    zoneMessage = `Price hasn't reached the ${entryLabel} yet — wait for it to arrive.`;
   }
 
   const reward = takeProfit != null ? Math.abs(takeProfit - entryPrice) : null;
   const riskReward = reward != null && risk > 0 ? +(reward / risk).toFixed(2) : null;
 
-  return { direction, entryPrice, stopLoss, takeProfit, riskReward, zoneStatus, zoneMessage, confirmed, fibAligns };
-}
-
-export function buildAnalysis(symbol, style, refreshTick) {
-  const seed = hashStr(symbol + style + refreshTick);
-  const rand = mulberry32(seed);
-  const base = basePriceFor(symbol);
-  const cascade = CASCADES[style];
-
-  const regimes = ["uptrend", "downtrend", "range"];
-  let parentRegime = regimes[Math.floor(rand() * 3)];
-
-  const tiers = cascade.tiers.map((tierName, idx) => {
-    let regime = parentRegime;
-    if (idx > 0 && rand() < 0.28) regime = regimes[Math.floor(rand() * 3)];
-    parentRegime = regime;
-    const priceForTier = base * (1 + (rand() - 0.5) * 0.01 * (idx + 1));
-    const raw = generateStructure(regime, priceForTier, rand);
-    const labeled = labelStructure(raw, regime);
-    const trend = deriveTrend(labeled);
-    const currentPrice = labeled[labeled.length - 1].price + (rand() - 0.5) * base * 0.0015;
-    const bos = evaluateBOS(labeled, trend, rand);
-    return { name: tierName, role: cascade.roles[idx], regime, labeled, trend, currentPrice, bos };
-  });
-
-  const entryTier = tiers[tiers.length - 1];
-  const livePrice = entryTier.currentPrice;
-
-  const wantPattern = rand() < 0.6;
-  const dirGuess =
-    entryTier.trend === "downtrend" ? "bullish" : entryTier.trend === "uptrend" ? "bearish" : rand() < 0.5 ? "bullish" : "bearish";
-  let candles;
-  if (wantPattern) {
-    const pool = PATTERNS.filter((p) => (dirGuess === "bullish" ? /Bullish|Hammer|Morning/.test(p) : /Bearish|Shooting|Evening/.test(p)));
-    const chosen = pool[Math.floor(rand() * pool.length)];
-    candles = injectPattern(rand, livePrice, base * 0.0018, chosen);
-  } else {
-    candles = Array.from({ length: 3 }, () => makeCandle(rand, livePrice + (rand() - 0.5) * base * 0.001, 0, base * 0.0015));
-  }
-  const pattern = detectPattern(candles);
-
-  const psych = psychLevelsNear(symbol, livePrice);
-  const swingLevels = entryTier.labeled.map((p) => p.price);
-  const tolerance = base * 0.0012;
-  const keyLevels = psych.map((pl) => {
-    const match = swingLevels.find((sl) => Math.abs(sl - pl) < tolerance);
-    return { price: pl, merged: !!match };
-  });
-  const nearestLevel = keyLevels.reduce((closest, k) =>
-    !closest || Math.abs(k.price - livePrice) < Math.abs(closest.price - livePrice) ? k : closest, null);
-  const priceNearKeyLevel = !!nearestLevel && Math.abs(nearestLevel.price - livePrice) < tolerance * 1.4;
-  const mergedLevel = keyLevels.find((k) => k.merged && Math.abs(k.price - livePrice) < tolerance * 1.6);
-  const priceNearMergedLevel = !!mergedLevel;
-
-  const fib = buildFibonacci(entryTier.labeled, entryTier.trend, livePrice, tolerance * 1.4);
-
-  const { checklist, score, strength, alarmActive, total } = buildConfluence({
-    tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel,
-  });
-
- const tradePlan = buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, base, score);
-  // A real signal requires ALL of: strong confluence (5+), a confirmed
-  // reversal candle in the trend's direction, AND price genuinely sitting
-  // on the psychological level — never just one or two of these.
-  const finalAlarmActive = alarmActive && tradePlan?.zoneStatus === "at_zone";
-
   return {
-    symbol, tiers, livePrice, pattern, keyLevels, fib, checklist, score, strength,
-    alarmActive: finalAlarmActive, total, tradePlan,
-    entryTierName: entryTier.name, decimals: decimalsFor(symbol),
+    direction, entryPrice, entrySource, stopLoss, takeProfit, riskReward,
+    zoneStatus, zoneMessage, confirmed, fibAligns, entryIsPsychBonus, missedInfo,
   };
 }
 
@@ -164,7 +156,6 @@ export async function buildLiveAnalysis(symbol, style, getTierCandles, visionByT
   const base = basePriceFor(symbol);
   const tolerance = base * 0.0012;
 
-  // Fetch all tiers in parallel
   const candleResults = await Promise.all(cascade.tiers.map((t) => getTierCandles(t)));
 
   const tiers = cascade.tiers.map((tierName, idx) => {
@@ -204,10 +195,14 @@ export async function buildLiveAnalysis(symbol, style, getTierCandles, visionByT
 
   const psych = psychLevelsNear(symbol, livePrice);
   const swingLevels = entryTier.labeled.map((p) => p.price);
-  const keyLevels = psych.map((pl) => {
-    const match = swingLevels.find((sl) => Math.abs(sl - pl) < tolerance);
-    return { price: pl, merged: !!match };
-  });
+  const keyLevels = psych
+    .map((pl) => {
+      const match = swingLevels.find((sl) => Math.abs(sl - pl) < tolerance);
+      const retests = entryTier.candles ? countLevelRetests(entryTier.candles, pl, tolerance) : 0;
+      return { price: pl, merged: !!match, retests };
+    })
+    .filter((k) => k.retests >= MIN_RETESTS || k.merged); // structure-confirmed levels bypass the raw retest count
+
   const nearestLevel = keyLevels.reduce((closest, k) =>
     !closest || Math.abs(k.price - livePrice) < Math.abs(closest.price - livePrice) ? k : closest, null);
   const priceNearKeyLevel = !!nearestLevel && Math.abs(nearestLevel.price - livePrice) < tolerance * 1.4;
@@ -218,11 +213,17 @@ export async function buildLiveAnalysis(symbol, style, getTierCandles, visionByT
     ? buildFibonacci(entryTier.labeled, entryTier.trend, livePrice, tolerance * 1.4)
     : { valid: false };
 
+  const zones = entryTier.candles ? detectSupplyDemandZones(entryTier.candles) : [];
+  const inZone = zones.find((z) => livePrice >= z.low && livePrice <= z.high) ?? null;
+
   const { checklist, score, strength, alarmActive, total } = buildConfluence({
-    tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel,
+    tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel, inZone,
   });
 
-  const tradePlan = buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, base);
+  const tradePlan = buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, base, score, zones, entryTier.name);
+  // A real signal requires ALL of: strong confluence (5+), a confirmed
+  // trend-following reversal candle, AND price genuinely at a strong entry
+  // level (structure, supply/demand, or psychological) — never just one.
   const finalAlarmActive = alarmActive && tradePlan?.zoneStatus === "at_zone";
 
   return {

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Login() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +23,7 @@ export default function Login() {
   return (
     <div className="max-w-sm mx-auto px-5 py-20">
       <h1 className="font-display text-2xl font-bold text-ink">Log in</h1>
-      <p className="text-sm text-ink/50 mt-1.5 mb-8">Welcome back — pick up where your cascade left off.</p>
+      <p className="text-sm text-ink/50 mt-1.5 mb-8">Welcome back, pick up where your cascade left off.</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="text-xs font-bold uppercase tracking-wide text-ink/40">Email</label>
@@ -40,8 +40,14 @@ export default function Login() {
           {loading ? "Logging in…" : "Log in"}
         </button>
       </form>
+      <button
+        onClick={() => signInWithGoogle()}
+        className="w-full mt-4 border border-line rounded-xl py-3 text-sm font-bold text-ink flex items-center justify-center gap-2"
+      >
+        Continue with Google
+      </button>
       <p className="text-sm text-ink/50 mt-6 text-center">
-        No account? <Link to="/signup" className="text-royal font-semibold">Start a free trial</Link>
+        No account? <Link to="/signup" className="text-royal font-semibold">Sign up</Link>
       </p>
     </div>
   );

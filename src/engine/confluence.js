@@ -2,7 +2,7 @@
 // 8-point checklist and an overall strength label.
 import { fmtPrice } from "./symbols.js";
 
-export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel }) {
+export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel, inZone }) {
   const biasTrend = tiers[0].trend;
   const directionTrend = tiers[1].trend;
   const trendTierTrend = tiers[2].trend;
@@ -46,6 +46,13 @@ export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, 
         ? `Price at ${fib.atKeyLevel.label}% Fibonacci level (${fmtPrice(symbol, fib.atKeyLevel.price)})`
         : "Price not at the 50.0% or 61.8% Fibonacci level",
       pass: !!fib?.priceAtKeyRetracement,
+    },
+    {
+      key: "supplyDemand",
+      label: inZone
+        ? `Price inside an unmitigated ${inZone.type} zone (${fmtPrice(symbol, inZone.low)}–${fmtPrice(symbol, inZone.high)})`
+        : "Price not inside a supply/demand zone",
+      pass: !!inZone,
     },
   ];
 

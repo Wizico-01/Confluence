@@ -54,3 +54,21 @@ export function psychLevelsNear(symbol, price) {
   for (let i = -2; i <= 2; i++) levels.push(+(base + i * grid).toFixed(decimalsFor(symbol)));
   return levels;
 }
+
+// Only counts a psych level as "strong" if price has genuinely touched it
+// multiple times across the fetched candle history — a level nobody has
+// retested is just a round number, not a proven level.
+export function countLevelRetests(candles, levelPrice, tolerance) {
+  let touches = 0;
+  for (const c of candles) {
+    if (c.low <= levelPrice + tolerance && c.high >= levelPrice - tolerance) touches++;
+  }
+  return touches;
+}
+
+// Approximate minutes per candle, used to estimate how long ago price left
+// a zone (candlesAgo × minutes = rough elapsed time).
+export const TIER_MINUTES = {
+  Monthly: 43200, Weekly: 10080, Daily: 1440,
+  "4H": 240, "1H": 60, "30M": 30, "15M": 15, "1M/5M": 5,
+};

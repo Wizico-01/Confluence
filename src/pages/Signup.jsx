@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Signup() {
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +33,7 @@ export default function Signup() {
 
   return (
     <div className="max-w-sm mx-auto px-5 py-20">
-      <h1 className="font-display text-2xl font-bold text-ink">Start your free trial</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">Register Now</h1>
       <p className="text-sm text-ink/50 mt-1.5 mb-8">Create an account, then choose a plan to unlock the dashboard.</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -51,6 +51,12 @@ export default function Signup() {
           {loading ? "Creating account…" : "Create account"}
         </button>
       </form>
+      <button
+        onClick={() => signInWithGoogle()}
+        className="w-full mt-4 border border-line rounded-xl py-3 text-sm font-bold text-ink flex items-center justify-center gap-2"
+      >
+        Signup with Google
+      </button>
       <p className="text-sm text-ink/50 mt-6 text-center">
         Already have an account? <Link to="/login" className="text-royal font-semibold">Log in</Link>
       </p>

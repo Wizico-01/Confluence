@@ -21,14 +21,14 @@ const ANALYZE_MS = 20000;
 
 const ONBOARD_SLIDES = [
   { icon: GitBranch, title: "Top-down cascade", desc: "Bias, direction, trend, and entry, checked in order." },
-  { icon: Target, title: "Confluence scoring", desc: "8 factors, always weighing what's real." },
+  { icon: Target, title: "Confluence scoring", desc: "9 factors, always weighing what's real." },
   { icon: TrendingUp, title: "Trend-following signals", desc: "Entries always follow the trend, never fight it." },
 ];
 
 const ANALYZE_SLIDES = [
   { icon: GitBranch, title: "Reading the top-down cascade", desc: "Checking bias, direction, and trend across every timeframe." },
   { icon: Activity, title: "Mapping market structure", desc: "Finding higher highs, higher lows, and breaks of structure." },
-  { icon: Target, title: "Locking psychological levels", desc: "Matching round-number levels with real structure." },
+  { icon: Target, title: "Locking strong support/resistance and supply/demand zones", desc: "Only proven, retested levels count." },
   { icon: TrendingUp, title: "Measuring Fibonacci retracement", desc: "Checking the 50% and 61.8% pullback zones." },
   { icon: Bell, title: "Scanning for reversal candlesticks", desc: "Engulfing, harami, pin bars, and more, always with the trend." },
 ];
@@ -62,7 +62,7 @@ function SpinnerSplash({ slides, index, subtitle }) {
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [selectedSymbol, setSelectedSymbol] = useState("EURUSD");
-  const [symbol, setSymbol] = useState(null); // only set once "Analyze" is tapped
+  const [symbol, setSymbol] = useState(null);
   const [refreshTick, setRefreshTick] = useState(0);
   const [stopLossPips, setStopLossPips] = useState(20);
   const [alarmLog, setAlarmLog] = useState([]);
@@ -279,11 +279,18 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-bold text-ink">
                   Trade plan — {analysis.tradePlan.direction === "buy" ? "Buy" : "Sell"}
+                  <span className="text-ink/40 font-medium">
+                    {" · "}
+                    {analysis.tradePlan.entrySource === "supply_demand" ? "Supply/Demand zone"
+                      : analysis.tradePlan.entrySource === "psychological" ? "Psychological level"
+                      : "Support/Resistance"}
+                  </span>
                   {!analysis.tradePlan.confirmed && <span className="text-ink/40 font-medium"> (prospective)</span>}
-                  {analysis.tradePlan.fibAligns && <span className="text-royal font-medium"> · Fib + psych level aligned</span>}
+                  {analysis.tradePlan.fibAligns && <span className="text-royal font-medium"> · Fib aligned</span>}
+                  {analysis.tradePlan.entryIsPsychBonus && <span className="text-bull font-medium"> · Psych bonus</span>}
                 </p>
                 {analysis.tradePlan.riskReward && (
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-royal/10 text-royal">1:{analysis.tradePlan.riskReward} R:R</span>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-royal/10 text-royal shrink-0">1:{analysis.tradePlan.riskReward} R:R</span>
                 )}
               </div>
               <div className="space-y-2 text-xs">
@@ -303,8 +310,12 @@ export default function Dashboard() {
               <div
                 className="mt-3 rounded-lg px-3 py-2 text-xs font-semibold"
                 style={{
-                  background: analysis.tradePlan.zoneStatus === "at_zone" ? "#E6F7EF" : analysis.tradePlan.zoneStatus === "missed" ? "#FDECEF" : "#FFF6DD",
-                  color: analysis.tradePlan.zoneStatus === "at_zone" ? "#0E9F6E" : analysis.tradePlan.zoneStatus === "missed" ? "#E11D48" : "#D69E00",
+                  background: analysis.tradePlan.zoneStatus === "at_zone" ? "#E6F7EF"
+                    : analysis.tradePlan.zoneStatus === "missed" ? (analysis.tradePlan.missedInfo?.stillClose ? "#FFF6DD" : "#FDECEF")
+                    : "#FFF6DD",
+                  color: analysis.tradePlan.zoneStatus === "at_zone" ? "#0E9F6E"
+                    : analysis.tradePlan.zoneStatus === "missed" ? (analysis.tradePlan.missedInfo?.stillClose ? "#D69E00" : "#E11D48")
+                    : "#D69E00",
                 }}
               >
                 {analysis.tradePlan.zoneMessage}
