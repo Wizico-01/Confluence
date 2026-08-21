@@ -3,8 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // Uses '/' on Vercel so assets don't 404, and '/Confluence/' on GitHub Pages
-  base: process.env.VERCEL ? '/' : '/Confluence/',
+  base: '/Confluence/',
   build: {
     outDir: 'docs',
     emptyOutDir: true,
