@@ -61,7 +61,7 @@ export function deriveTrend(labeled) {
   return "range";
 }
 
-// A break of structure must be retested before it counts toward confluence.
+// A break of structure must be retested before it counts toward Gobulu.
 export function evaluateBOS(labeled, trend, rand) {
   if (trend === "range") return { occurred: false };
   const lastOpposingLevel =

@@ -9,7 +9,7 @@ export default function Logo({ light = false, size = "md" }) {
     <div className="flex items-center gap-2.5">
       {!imgError ? (
         <img
-          src="/logo.png"
+          src="./logo.png"
           alt="GOBULU Logo"
           onError={() => setImgError(true)}
           className={`${dims} rounded-lg object-contain`}

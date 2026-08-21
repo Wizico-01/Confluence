@@ -1,8 +1,8 @@
-// Confluence scoring: turns the cascade + pattern + level data into the
+// Gobulu scoring: turns the cascade + pattern + level data into the
 // 8-point checklist and an overall strength label.
 import { fmtPrice } from "./symbols.js";
 
-export function buildConfluence({ tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel, inZone }) {
+export function buildGobulu({ tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel, inZone }) {
   const biasTrend = tiers[0].trend;
   const directionTrend = tiers[1].trend;
   const trendTierTrend = tiers[2].trend;

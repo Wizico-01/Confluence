@@ -1,7 +1,7 @@
 // Fibonacci retracement — computed from the most recent completed swing
 // (last swing high to last swing low, or vice versa) on the entry timeframe.
 // Per Kceemu's system: only the 50.0% and 61.8% levels count as valid
-// retracement confluence — these are the levels price is expected to
+// retracement Gobulu — these are the levels price is expected to
 // react from before continuing the original trend.
 
 const LEVELS = [
@@ -12,7 +12,7 @@ const LEVELS = [
   { pct: 1, label: "100.0" },
 ];
 
-// Valid confluence levels per the trading system — kept separate from the
+// Valid Gobulu levels per the trading system — kept separate from the
 // full LEVELS list above (which is used just for drawing/reference).
 const KEY_RETRACEMENT_LEVELS = [0.5, 0.618];
 

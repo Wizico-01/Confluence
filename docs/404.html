@@ -5,9 +5,9 @@
     <script>
       // GitHub Pages SPA redirect trick: encode the real path into a query
       // string and bounce to index.html, which restores it below.
-      var path = location.pathname.replace("/Confluence", "");
+      var path = location.pathname.replace("/Gobulu", "");
       location.replace(
-        "/Confluence/?redirect=" + encodeURIComponent(path + location.search + location.hash)
+        "/Gobulu/?redirect=" + encodeURIComponent(path + location.search + location.hash)
       );
     </script>
   </head>

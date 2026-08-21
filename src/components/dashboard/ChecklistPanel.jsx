@@ -14,7 +14,7 @@ export default function ChecklistPanel({ checklist, score, strength }) {
   return (
     <div className="rounded-xl border border-line bg-white p-4">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-sm font-bold text-ink">Confluence score</p>
+        <p className="text-sm font-bold text-ink">Gobulu score</p>
         <span className="text-xs font-extrabold px-2.5 py-1 rounded-full" style={{ background: s.bg, color: s.fg }}>
           {score}/{total} · {strength}
         </span>

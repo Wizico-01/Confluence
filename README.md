@@ -1,4 +1,4 @@
-# Confluence
+# Gobulu
 
 Multi-timeframe, top-down forex trade analysis — subscription SaaS. React + Vite frontend, Supabase (auth, database, edge functions) backend, Paystack for monthly billing.
 
@@ -10,7 +10,7 @@ src/
   components/     Navbar, Footer, Logo, PricingCard, ProtectedRoute
   components/dashboard/   SetupPanel, TierCard, Sparkline, ChecklistPanel, RiskPanel, AlertLog
   engine/         The actual trading logic — structure detection, candlestick
-                   patterns, confluence scoring, risk/lot sizing, data provider
+                   patterns, Gobulu scoring, risk/lot sizing, data provider
   context/        AuthContext (Supabase session + subscription state)
   lib/            supabaseClient, paystack checkout helper, edge function wrapper
 supabase/
@@ -23,9 +23,9 @@ supabase/
 ## Fibonacci retracement
 
 `src/engine/fibonacci.js` computes a retracement from the most recent swing high/low on the
-entry timeframe. Only the **50.0%** and **61.8%** levels count toward the confluence score
+entry timeframe. Only the **50.0%** and **61.8%** levels count toward the Gobulu score
 (per Kceemu's system) — other standard levels (38.2%, 100%) are computed and shown in the
-`FibPanel` for reference only, but don't add to the score. This is now an 8th confluence
+`FibPanel` for reference only, but don't add to the score. This is now an 8th Gobulu
 factor, so the score/strength scale is out of 8, not 7.
 
 ## Chart screenshot upload
@@ -47,7 +47,7 @@ this code are written to keep that distinction clear rather than implying the tw
 ## Current status: demo data, real architecture
 
 The engine (`src/engine/`) is fully functional — structure detection, break-of-structure +
-retest logic, all 11 candlestick patterns, confluence scoring, and risk sizing are real code,
+retest logic, all 11 candlestick patterns, Gobulu scoring, and risk sizing are real code,
 not placeholders. **The price feed itself is currently seeded demo data** (see the comment at
 the top of `src/engine/dataProvider.js`), so the whole product can be built, tested, and
 demoed before your Twelve Data (or other provider) key is wired in.

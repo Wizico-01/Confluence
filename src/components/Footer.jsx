@@ -12,7 +12,7 @@ export default function Footer() {
           <Link to="/pricing" className="hover:text-ink">Pricing</Link>
           <Link to="/login" className="hover:text-ink">Log in</Link>
         </div>
-        <p className="text-xs text-ink/40">© {new Date().getFullYear()} Confluence. Not investment advice.</p>
+        <p className="text-xs text-ink/40">© {new Date().getFullYear()} Gobulu. Not investment advice.</p>
       </div>
     </footer>
   );

@@ -21,7 +21,7 @@ const ANALYZE_MS = 20000;
 
 const ONBOARD_SLIDES = [
   { icon: GitBranch, title: "Top-down cascade", desc: "Bias, direction, trend, and entry, checked in order." },
-  { icon: Target, title: "Confluence scoring", desc: "9 factors, always weighing what's real." },
+  { icon: Target, title: "Gobulu scoring", desc: "9 factors, always weighing what's real." },
   { icon: TrendingUp, title: "Trend-following signals", desc: "Entries always follow the trend, never fight it." },
 ];
 
@@ -150,8 +150,8 @@ export default function Dashboard() {
       const signature = `${symbol}-${analysis.entryTierName}-${analysis.pattern?.name}-${analysis.score}`;
       if (lastNotifiedRef.current !== signature) {
         lastNotifiedRef.current = signature;
-        new Notification(`Confluence: Strong setup on ${symbol}`, {
-          body: `${analysis.entryTierName} entry · ${analysis.score}/${analysis.total} confluence · ${analysis.pattern?.name ?? ""}`,
+        new Notification(`Gobulu: Strong setup on ${symbol}`, {
+          body: `${analysis.entryTierName} entry · ${analysis.score}/${analysis.total} Gobulu · ${analysis.pattern?.name ?? ""}`,
         });
       }
     }
@@ -184,7 +184,7 @@ export default function Dashboard() {
   }
 
   if (showOnboard) {
-    return <SpinnerSplash slides={ONBOARD_SLIDES} index={onboardIndex} subtitle="Welcome to Confluence" />;
+    return <SpinnerSplash slides={ONBOARD_SLIDES} index={onboardIndex} subtitle="Welcome to Gobulu" />;
   }
 
   if (isAnalyzing) {
@@ -201,7 +201,7 @@ export default function Dashboard() {
             <span className="text-white font-display font-bold text-lg">{cascade?.label ?? "Trading"} cascade</span>
             <div className="flex items-center gap-3">
               {notifPermission !== "granted" && notifPermission !== "unsupported" && (
-                <button onClick={requestNotifications} title="Get notified the moment price reaches a confirmed entry zone with 5+ confluence" className="flex items-center gap-1 text-white/90 text-xs font-semibold bg-white/15 rounded-full px-3 py-1.5 transition-colors hover:bg-white/25">
+                <button onClick={requestNotifications} title="Get notified the moment price reaches a confirmed entry zone with 5+ Gobulu" className="flex items-center gap-1 text-white/90 text-xs font-semibold bg-white/15 rounded-full px-3 py-1.5 transition-colors hover:bg-white/25">
                   <BellRing size={13} /> Notify me at entry zone
                 </button>
               )}
@@ -260,7 +260,7 @@ export default function Dashboard() {
               <Bell size={20} className="text-white" />
               <div className="flex-1">
                 <p className="text-white font-bold text-sm">Setup confirmed — {analysis.pattern?.name}</p>
-                <p className="text-white/80 text-xs">{analysis.entryTierName} entry · {analysis.score}/{analysis.total} confluence · tap to log alert</p>
+                <p className="text-white/80 text-xs">{analysis.entryTierName} entry · {analysis.score}/{analysis.total} Gobulu · tap to log alert</p>
               </div>
             </button>
           ) : (
@@ -269,7 +269,7 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-ink/50">
                 {analysis.tradePlan?.zoneStatus === "missed" || analysis.tradePlan?.zoneStatus === "insufficient"
                   ? analysis.tradePlan.zoneMessage
-                  : "No confirmed entry yet, waiting on confluence and candlestick confirmation."}
+                  : "No confirmed entry yet, waiting on Gobulu and candlestick confirmation."}
               </p>
             </div>
           )}

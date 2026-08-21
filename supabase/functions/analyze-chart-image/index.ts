@@ -6,7 +6,7 @@
 // visible key levels. This is a cross-check/second-opinion layer that sits
 // alongside the live-data cascade — image reads are inherently fuzzier
 // than structure computed from real OHLC data, so treat the result as
-// supporting context, not a replacement for the cascade's confluence score.
+// supporting context, not a replacement for the cascade's Gobulu score.
 //
 // Deploy:  supabase functions deploy analyze-chart-image
 // Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-xxx

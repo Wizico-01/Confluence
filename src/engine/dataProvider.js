@@ -3,7 +3,7 @@
 import { CASCADES, basePriceFor, psychLevelsNear, psychLevelsInDirection, countLevelRetests, decimalsFor, fmtPrice, TIER_MINUTES } from "./symbols.js";
 import { detectSwingPoints, labelSwingPointsFromCandles, deriveTrend, evaluateBOSFromCandles, detectSupplyDemandZones } from "./structure.js";
 import { detectPattern } from "./patterns.js";
-import { buildConfluence } from "./confluence.js";
+import { buildGobulu } from "./Gobulu.js";
 import { buildFibonacci } from "./fibonacci.js";
 
 const MIN_RETESTS = 2; // a level must be touched at least twice to count as proven/strong
@@ -125,17 +125,17 @@ function buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, b
     const stillClose = distancePastEntry <= risk * 0.6;
     missedInfo = { candlesAgo, elapsedLabel, stillClose };
     zoneMessage = stillClose
-      ? `Price left the ${entryLabel} ${elapsedLabel} and hasn't moved far — still cautiously watchable, but do not chase without fresh confluence.`
+      ? `Price left the ${entryLabel} ${elapsedLabel} and hasn't moved far — still cautiously watchable, but do not chase without fresh Gobulu.`
       : `Price left the ${entryLabel} ${elapsedLabel} and has moved too far — this entry is gone. Wait for a new setup.`;
   } else if (Math.abs(livePrice - entryPrice) <= zoneTolerance) {
     if (score >= 5 && confirmed) {
       zoneStatus = "at_zone";
       zoneMessage = fibAligns
-        ? `Price is at the ${entryLabel} — reinforced by the ${fib.atKeyLevel.label}% Fibonacci level lining up here — with strong confluence, in line with the trend. Valid entry.`
-        : `Price is at the ${entryLabel} with strong confluence, in line with the trend — valid entry.`;
+        ? `Price is at the ${entryLabel} — reinforced by the ${fib.atKeyLevel.label}% Fibonacci level lining up here — with strong Gobulu, in line with the trend. Valid entry.`
+        : `Price is at the ${entryLabel} with strong Gobulu, in line with the trend — valid entry.`;
     } else {
       zoneStatus = "insufficient";
-      zoneMessage = `Price is at the ${entryLabel} — but confluence isn't strong enough yet. Not a valid signal.`;
+      zoneMessage = `Price is at the ${entryLabel} — but Gobulu isn't strong enough yet. Not a valid signal.`;
     }
   } else {
     zoneStatus = "approaching";
@@ -216,12 +216,12 @@ export async function buildLiveAnalysis(symbol, style, getTierCandles, visionByT
   const zones = entryTier.candles ? detectSupplyDemandZones(entryTier.candles) : [];
   const inZone = zones.find((z) => livePrice >= z.low && livePrice <= z.high) ?? null;
 
-  const { checklist, score, strength, alarmActive, total } = buildConfluence({
+  const { checklist, score, strength, alarmActive, total } = buildGobulu({
     tiers, entryTier, pattern, priceNearKeyLevel, priceNearMergedLevel, fib, symbol, nearestLevel, mergedLevel, inZone,
   });
 
   const tradePlan = buildTradePlan(entryTier, pattern, fib, keyLevels, livePrice, symbol, base, score, zones, entryTier.name);
-  // A real signal requires ALL of: strong confluence (5+), a confirmed
+  // A real signal requires ALL of: strong Gobulu (5+), a confirmed
   // trend-following reversal candle, AND price genuinely at a strong entry
   // level (structure, supply/demand, or psychological) — never just one.
   const finalAlarmActive = alarmActive && tradePlan?.zoneStatus === "at_zone";

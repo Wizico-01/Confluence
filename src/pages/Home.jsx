@@ -5,7 +5,7 @@ import { ArrowRight, LayoutGrid, Bell, Shield, GitBranch } from "lucide-react";
 const FEATURES = [
   { icon: GitBranch, title: "Top-down cascade", body: "Bias, direction, trend, and entry, each timeframe checked in order, the way disciplined traders actually work." },
   { icon: LayoutGrid, title: "Structure-aware", body: "HH/HL, LH/LL, and break-of-structure with mandatory retest, so a single wick can't fake you into a trade." },
-  { icon: Bell, title: "Confluence alerts", body: "Only alarms once trend, structure, key levels, and a reversal candlestick line up, 4 minimum, scored out of 7." },
+  { icon: Bell, title: "Gobulu alerts", body: "Only alarms once trend, structure, key levels, and a reversal candlestick line up, 4 minimum, scored out of 7." },
   { icon: Shield, title: "Risk built in", body: "Set your account size and risk appetite once; every setup comes with a ready-to-use lot size." },
 ];
 
@@ -23,7 +23,7 @@ export default function Home() {
               Trade the setup, not the noise.
             </h1>
             <p className="text-white/70 mt-5 text-base md:text-lg max-w-md">
-              Confluence runs your top-down analysis across every timeframe automatically,
+              Gobulu runs your top-down analysis across every timeframe automatically,
               trend, structure, key levels, and candlestick confirmation, and alerts you
               when enough of them agree.
             </p>
@@ -38,7 +38,7 @@ export default function Home() {
           </div>
 
           <div className="rounded-2xl overflow-hidden border border-white/10">
-            <img src="/hero.jpg" alt="Confluence app preview" className="w-full h-auto object-cover" />
+            <img src="/hero.jpg" alt="Gobulu app preview" className="w-full h-auto object-cover" />
           </div>
         </div>
       </section>

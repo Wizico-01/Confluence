@@ -3,7 +3,7 @@ import { TrendingDown } from "lucide-react";
 
 // Shows the computed Fibonacci retracement levels for the entry timeframe,
 // highlighting 50.0 and 61.8 since those are the only two that count as
-// confluence in Kceemu's system — the others are shown for reference only.
+// Gobulu in Kceemu's system — the others are shown for reference only.
 export default function FibPanel({ fib, symbol, decimals }) {
   if (!fib?.valid) {
     return (
@@ -51,7 +51,7 @@ export default function FibPanel({ fib, symbol, decimals }) {
           );
         })}
       </div>
-      <p className="text-[10px] text-ink/30 mt-2">Only 50.0% and 61.8% count toward confluence scoring.</p>
+      <p className="text-[10px] text-ink/30 mt-2">Only 50.0% and 61.8% count toward Gobulu scoring.</p>
     </div>
   );
 }
