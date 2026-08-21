@@ -3,7 +3,7 @@
 import { CASCADES, basePriceFor, psychLevelsNear, psychLevelsInDirection, countLevelRetests, decimalsFor, fmtPrice, TIER_MINUTES } from "./symbols.js";
 import { detectSwingPoints, labelSwingPointsFromCandles, deriveTrend, evaluateBOSFromCandles, detectSupplyDemandZones } from "./structure.js";
 import { detectPattern } from "./patterns.js";
-import { buildGobulu } from "./Gobulu.js";
+import { buildGobulu } from "./gobulu.js";
 import { buildFibonacci } from "./fibonacci.js";
 
 const MIN_RETESTS = 2; // a level must be touched at least twice to count as proven/strong
