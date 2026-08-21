@@ -10,9 +10,12 @@ const FEATURES = [
 ];
 
 export default function Home() {
+  // Dynamically uses base URL ("/" for localhost, "/Gobulu/" for GitHub Pages)
+  const heroImgPath = `${import.meta.env.BASE_URL}hero.jpg`;
+
   return (
     <div>
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="bg-royal-deep">
         <div className="max-w-6xl mx-auto px-5 pt-16 pb-20 md:pt-24 md:pb-28 grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -38,12 +41,12 @@ export default function Home() {
           </div>
 
           <div className="rounded-2xl overflow-hidden border border-white/10">
-            <img src="./hero.jpg" alt="Gobulu app preview" className="w-full h-auto object-cover" />
+            <img src={heroImgPath} alt="Gobulu app preview" className="w-full h-auto object-cover" />
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features Section */}
       <section className="max-w-6xl mx-auto px-5 py-20">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-ink text-center max-w-xl mx-auto">
           Everything your top-down process needs, running in the background.
@@ -61,7 +64,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA Section */}
       <section className="bg-mist border-t border-line">
         <div className="max-w-6xl mx-auto px-5 py-16 text-center">
           <h2 className="font-display text-2xl font-bold text-ink">Stop staring at four charts at once.</h2>
