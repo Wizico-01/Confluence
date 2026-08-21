@@ -38,7 +38,7 @@ export default function Home() {
           </div>
 
           <div className="rounded-2xl overflow-hidden border border-white/10">
-            <img src="/hero.jpg" alt="Gobulu app preview" className="w-full h-auto object-cover" />
+            <img src="./hero.jpg" alt="Gobulu app preview" className="w-full h-auto object-cover" />
           </div>
         </div>
       </section>
