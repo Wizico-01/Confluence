@@ -3,15 +3,12 @@ import React, { useState } from "react";
 export default function Logo({ light = false, size = "md" }) {
   const [imgError, setImgError] = useState(false);
   const heightClass = size === "sm" ? "h-6" : "h-8";
-  
-  // Combines base path ("/" locally, "/Gobulu/" on GitHub Pages) with logo path
-  const logoPath = `${import.meta.env.BASE_URL}logo.png`;
 
   return (
     <div className="flex items-center">
       {!imgError ? (
         <img
-          src={logoPath}
+          src="./logo.png"
           alt="GOBULU Logo"
           onError={() => setImgError(true)}
           className={`${heightClass} w-auto object-contain ${light ? "brightness-0 invert" : ""}`}
