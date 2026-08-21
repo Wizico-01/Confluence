@@ -12,7 +12,7 @@ export default function FibPanel({ fib, symbol, decimals }) {
           <TrendingDown size={15} className="text-royal" />
           <p className="text-sm font-bold text-ink">Fibonacci retracement</p>
         </div>
-        <p className="text-xs text-ink/40">No valid swing to measure — market is ranging on the entry timeframe.</p>
+        <p className="text-xs text-ink/40">No valid swing to measure, market is ranging on the entry timeframe.</p>
       </div>
     );
   }
