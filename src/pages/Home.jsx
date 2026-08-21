@@ -2,13 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, LayoutGrid, Bell, Shield, GitBranch } from "lucide-react";
 
-const CASCADE_PREVIEW = [
-  { label: "Monthly", role: "Bias", trend: "Uptrend", color: "bg-bull" },
-  { label: "Weekly", role: "Direction", trend: "Uptrend", color: "bg-bull" },
-  { label: "Daily", role: "Trend", trend: "Range", color: "bg-royal" },
-  { label: "4H", role: "Entry", trend: "Bullish Engulfing", color: "bg-gold" },
-];
-
 const FEATURES = [
   { icon: GitBranch, title: "Top-down cascade", body: "Bias, direction, trend, and entry, each timeframe checked in order, the way disciplined traders actually work." },
   { icon: LayoutGrid, title: "Structure-aware", body: "HH/HL, LH/LL, and break-of-structure with mandatory retest, so a single wick can't fake you into a trade." },
@@ -44,7 +37,6 @@ export default function Home() {
             </div>
           </div>
 
-                    {/* Hero image — place your real product/ad photo at public/hero.jpg */}
           <div className="rounded-2xl overflow-hidden border border-white/10">
             <img src="/hero.jpg" alt="Confluence app preview" className="w-full h-auto object-cover" />
           </div>

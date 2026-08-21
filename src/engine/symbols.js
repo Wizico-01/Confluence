@@ -72,3 +72,4 @@ export const TIER_MINUTES = {
   Monthly: 43200, Weekly: 10080, Daily: 1440,
   "4H": 240, "1H": 60, "30M": 30, "15M": 15, "1M/5M": 5,
 };
+

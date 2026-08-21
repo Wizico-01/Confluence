@@ -33,11 +33,7 @@ export function AuthProvider({ children }) {
 
   const signUp = (email, password) => supabase.auth.signUp({ email, password });
   const signIn = (email, password) => supabase.auth.signInWithPassword({ email, password });
-    const signInWithGoogle = () =>
-    supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/Confluence/dashboard` },
-    });
+  const signInWithGoogle = () => supabase.auth.signInWithOAuth({ provider: "google" });
   const signOut = () => supabase.auth.signOut();
 
   return (

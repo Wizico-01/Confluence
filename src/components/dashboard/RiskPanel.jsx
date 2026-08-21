@@ -32,7 +32,7 @@ export default function RiskPanel({ accountSize, riskPercent, stopLossPips, setS
           <span className="text-lg font-extrabold font-nums text-royal">{lot.lots} lots</span>
         </div>
       )}
-      <p className="text-[10px] mt-2 text-ink/30">Approximate — assumes ~$10/pip per standard lot; confirm exact pip value with your broker.</p>
+      <p className="text-[10px] mt-2 text-ink/30">Approximate, assumes ~$10/pip per standard lot; confirm exact pip value with your broker.</p>
     </div>
   );
 }

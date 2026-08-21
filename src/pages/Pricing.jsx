@@ -81,7 +81,7 @@ export default function Pricing() {
         ))}
       </div>
       <p className="text-xs text-ink/40 text-center mt-8">
-        Prices and plan codes shown are placeholders — set your real amounts and Paystack Plan codes before going live.
+        Prices and plan codes shown are placeholders, set your real amounts and Paystack Plan codes before going live.
       </p>
     </div>
   );
