@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // Keeps asset paths relative so both Vercel and GitHub Pages resolve assets correctly
+  base: './', // Ensures assets load on both Vercel and GitHub Pages
   build: {
-    outDir: 'dist', // Aligned with the gh-pages deployment script
+    outDir: 'dist', // Matches gh-pages -d dist
     emptyOutDir: true,
   },
 })
