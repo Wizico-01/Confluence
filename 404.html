@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      // GitHub Pages SPA redirect trick: encode the real path into a query
+      // string and bounce to index.html, which restores it below.
+      var path = location.pathname.replace("/Gobulu", "");
+      location.replace(
+        "/Gobulu/?redirect=" + encodeURIComponent(path + location.search + location.hash)
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
